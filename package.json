@@ -1,0 +1,19 @@
+{
+  "name": "clear",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Donte Littlejohn <littlejr@email.uscupstate.edu>",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg-promise": "^12.7.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6"
+  }
+}
