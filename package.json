@@ -10,6 +10,7 @@
   "author": "Donte Littlejohn <littlejr@email.uscupstate.edu>",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "express": "^5.2.1",
     "pg-promise": "^12.7.1"
   },
