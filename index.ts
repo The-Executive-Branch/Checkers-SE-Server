@@ -2,10 +2,10 @@ import express, { type Express, type Request, type Response } from "express";
 import pgPromise from "pg-promise";
 
 const pgp = pgPromise();
-const db = pgp("postgresql://teb@localhost:5432/checkers");
+const db = pgp(process.env.DATABASE_URL!);
 
+const PORT = Number(process.env.PORT) || 3000;
 const app: Express = express();
-const PORT = 3000;
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
@@ -14,12 +14,6 @@ app.get("/", (req: Request, res: Response) => {
 // AUTH ROUTES
 app.post("/auth/register", (req: Request, res: Response) => {
   // TODO
-  db.one(
-    "INSERT INTO auth (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
-    ["bob", "bob@example.com", "unique_hash"],
-  )
-    .then(console.log)
-    .catch(console.log);
 });
 
 app.post("/auth/unregister", (req: Request, res: Response) => {
@@ -34,6 +28,6 @@ app.post("/auth/logout", (req: Request, res: Response) => {
   // TODO
 });
 
-app.listen(PORT, () => {
+app.listen(process.env.PORT, () => {
   console.log(`Checkers server listening on port ${PORT}`);
 });

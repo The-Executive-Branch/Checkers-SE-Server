@@ -5,6 +5,7 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
+    "start": "node --env-file=.env index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Donte Littlejohn <littlejr@email.uscupstate.edu>",
