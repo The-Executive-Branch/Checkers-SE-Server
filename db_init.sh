@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # set -euo pipefail
 
+PORT="${1:-3000}"
+
+if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
+  echo "Port must be a number" >&2
+  exit 1
+fi
+
 DB_USER="teb"
 DB_NAME="checkers"
 
@@ -32,5 +39,10 @@ CREATE TRIGGER auth_set_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION set_updated_at();
 SQL
+
+cat > .env <<ENV
+DATABASE_URL=postgres://${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+PORT=${PORT}
+ENV
 
 ## TO RUN THIS SCRIPT, RUN THE FOLLOWING CODE -> chmod +x ./db_init.sh
