@@ -11,13 +11,26 @@ fi
 DB_USER="teb"
 DB_NAME="checkers"
 
+# Create the user if it is missing
+user_exists=$(psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '${DB_USER}'")
+
+if [[ "$user_exists" != "1" ]]; then
 psql postgres -v ON_ERROR_STOP=1 <<SQL
 CREATE USER ${DB_USER} WITH PASSWORD NULL;
+SQL
+fi
+
+# Create the database if it is missing
+db_exists=$(psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}'")
+
+if [[ "$db_exists" != "1" ]]; then
+psql postgres -v ON_ERROR_STOP=1 <<SQL
 CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};
 SQL
+fi
 
 psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 <<'SQL'
-CREATE TABLE auth (
+CREATE TABLE IF NOT EXISTS auth (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(30) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -34,10 +47,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER auth_set_updated_at
+CREATE OR REPLACE TRIGGER auth_set_updated_at
     BEFORE UPDATE ON auth
     FOR EACH ROW
     EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS sessions(
+    session_id TEXT PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '7 days')
+);
 SQL
 
 cat > .env <<ENV
