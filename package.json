@@ -16,6 +16,8 @@
     "pg-promise": "^12.7.1"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6"
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "checkers-shared-types": "github:The-Executive-Branch/Checkers-SE-Shared"
   }
 }
