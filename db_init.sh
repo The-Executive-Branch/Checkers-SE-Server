@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# set -euo pipefail
+
+## First time only, make the script runnable:  chmod +x ./db_init.sh
+## Then run it (port is optional, default 3000):  ./db_init.sh 4000
+
+set -euo pipefail
 
 PORT="${1:-3000}"
 
@@ -66,5 +70,3 @@ cat > .env <<ENV
 DATABASE_URL=postgres://${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 PORT=${PORT}
 ENV
-
-## TO RUN THIS SCRIPT, RUN THE FOLLOWING CODE -> chmod +x ./db_init.sh
