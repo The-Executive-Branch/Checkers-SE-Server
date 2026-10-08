@@ -10,6 +10,8 @@ fi
 
 DB_USER="teb"
 DB_NAME="checkers"
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
 
 # Create the user if it is missing
 user_exists=$(psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '${DB_USER}'")
