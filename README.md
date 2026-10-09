@@ -68,3 +68,10 @@ To change only the port later, edit the `PORT` line in `.env` directly.
 npm install
 npm start
 ```
+
+## Running integration tests
+
+1. Create the test database (first time only):
+   `DB_NAME=checkers_test ENV_FILE=.env.test ./db_init.sh`
+2. Run the tests:
+   `npm test`
