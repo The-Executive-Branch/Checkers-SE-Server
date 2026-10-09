@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-PORT="${1:-3000}"
+PORT="${1:-8000}"
 
 if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
   echo "Port must be a number" >&2
@@ -13,7 +13,7 @@ if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
 fi
 
 DB_USER="teb"
-DB_NAME="checkers"
+DB_NAME="${DB_NAME:-checkers}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 
@@ -66,7 +66,9 @@ CREATE TABLE IF NOT EXISTS sessions(
 );
 SQL
 
-cat > .env <<ENV
+
+ENV_FILE="${ENV_FILE:-.env}"
+cat > "$ENV_FILE" <<ENV
 DATABASE_URL=postgres://${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 PORT=${PORT}
 ENV
