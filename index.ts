@@ -85,8 +85,17 @@ app.post("/auth/login", (req: Request, res: Response) => {
   // TODO
 });
 
-app.post("/auth/logout", (req: Request, res: Response) => {
-  // TODO
+app.post("/auth/logout", async (req: Request, res: Response) => {
+  const [scheme, sessionId] = (req.headers.authorization ?? "").split(" ");
+  if (scheme !== "Bearer" || !sessionId) return res.sendStatus(204);
+
+  try {
+    await db.none("DELETE FROM sessions WHERE session_id = $1", sessionId);
+    res.sendStatus(204);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: ERRORS.SERVER }); // INTERNAL SERVER ERROR
+  }
 });
 
 app.listen(process.env.PORT, () => {
