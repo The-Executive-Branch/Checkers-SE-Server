@@ -51,15 +51,16 @@ Reload postgresql
 Find your current role and ensure it is a superuser
 
 ```bash
-  whoami
   #will return a role name
-  psql -d postgres -c '\du'
+  whoami
   #a table will appear, if superuser is next to your role, you can skip this step, if not, continue
-  sudo -u postgres psql -c "ALTER ROLE X WITH SUPERUSER;"
-  #replace X with your role
   psql -d postgres -c '\du'
+  #replace X with your role
+  sudo -u postgres psql -c "ALTER ROLE X WITH SUPERUSER;"
   #verify your role is a superuser 
+  psql -d postgres -c '\du'
   ```
+
 
 The `db_init.sh` script creates the database user, the database, and the tables, then writes a `.env` file containing the connection string and the server port.
 
