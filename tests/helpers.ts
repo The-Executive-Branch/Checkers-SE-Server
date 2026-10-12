@@ -26,3 +26,13 @@ export const seedTestUser = async (options: { expired?: boolean } = {}) => {
 
   return { userId: user.id, sessionId };
 };
+
+export const addDeviceSession = async (userId: string) => {
+  const sessionId = randomUUID();
+  await db.none("INSERT INTO sessions (session_id, user_id) VALUES ($1, $2)", [
+    sessionId,
+    userId,
+  ]);
+
+  return sessionId;
+};
