@@ -1,6 +1,11 @@
 import express, { type Express, type Request, type Response } from "express";
 import bcrypt from "bcrypt";
 import { db } from "./db.ts";
+import { randomUUID } from "node:crypto";
+
+type Email = string & { __brand: "Email" };
+type Username = string & { __brand: "Username" };
+type Password = string & { __brand: "Password" };
 
 const app: Express = express();
 
@@ -16,8 +21,34 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // AUTH ROUTES
-app.post("/auth/register", (req: Request, res: Response) => {
-  // TODO
+app.post("/auth/register", async (req: Request, res: Response) => {
+  //Ensuring the data entered is valid and changing it to the correct type
+  const email = parseEmail(req.body?.email);
+  const username = parseUsername(req.body?.username);
+  const password = parsePassword(req.body?.password);
+
+  if (email === "" || username === "" || password === "") {
+    return res.status(400).send({ error: "Invalid input data." });
+  }
+
+  try {
+    // Hash the password and insert the new user into the database
+    const passwordHash = bcrypt.hashSync(password, 10);
+    const uid = await db.one(
+      "INSERT INTO auth (email, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
+      [email, username, passwordHash],
+    );
+    // Create a new session for the user and return the session ID
+    const sessionId = await CreateSession(uid.id);
+
+    // Return the session ID to the client
+    res.status(201).send({ sessionId });
+  } catch (error) {   //error type return from PG promise
+    console.error(error);
+    return res.status(500).send({ error: ERRORS.SERVER });
+  }
+
+
 });
 
 app.post("/auth/unregister", async (req: Request, res: Response) => {
@@ -90,4 +121,41 @@ app.post("/auth/logout", (req: Request, res: Response) => {
   // TODO
 });
 
+app.post("/auth/login", async (req: Request, res: Response) => {
+  //TODO
+});
+
+const parseEmail = (email: String): Email => {
+  if (typeof email !== "string") {
+    email = ""
+    return email as Email;
+  }
+  return email as Email;
+}
+
+const parseUsername = (username: String): Username => {
+  if (typeof username !== "string" || username.length < 3 || username.length > 30) {
+    username = ""
+    return username as Username;
+  }
+  return username as Username;
+}
+
+const parsePassword = (password: String): Password => {
+  if (typeof password !== "string" || password.length < 10) {
+    password = ""
+    return password as Password;
+  }
+  return password as Password;
+}
+
+export const CreateSession = async (userId: string) => {
+  const sessionId = randomUUID();
+  await db.none("INSERT INTO sessions (session_id, user_id) VALUES ($1, $2)", [
+    sessionId,
+    userId,
+  ]);
+  return sessionId;
+};
 export { app };
+
