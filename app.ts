@@ -127,11 +127,37 @@ app.post("/auth/logout", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/auth/logout", (req: Request, res: Response) => {
-  // TODO
+app.post("/auth/login", async (req: Request, res: Response) => {
+  try {
+    const username = parseUsername(req.body?.username);
+    const password = parsePassword(req.body?.password);
+
+    const uid = await db.one(
+      "SELECT id, password_hash FROM auth WHERE username = $1",
+      [username],
+    );
+
+    const pwMatched = await bcrypt.compare(password, uid.password_hash);
+
+    if (!pwMatched) {
+      return res
+        .status(403)
+        .send({ error: "Incorrect username or password.", field: "username" }); // FORBIDDEN
+    }
+
+    const sessionId = await CreateSession(uid.id);
+    const expiresAt = await db.one(
+      "SELECT expires_at FROM sessions WHERE session_id = $1",
+      [sessionId],
+    );
+
+    res.status(201).send({ sessionId, expiresAt });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(400)
+      .send({ error: "Invalid input data.", field: "username" }); // BAD REQUEST
+  }
 });
 
-app.post("/auth/login", async (req: Request, res: Response) => {
-  //TODO
-});
 export { app };
