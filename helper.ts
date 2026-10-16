@@ -13,7 +13,7 @@ export const parseEmail = (input: string): Email | ParseError => {
   if (typeof input !== "string") {
     return {
       error: "Email is required.",
-      field: "ParseError",
+      field: "Email",
     };
   }
 
@@ -22,7 +22,7 @@ export const parseEmail = (input: string): Email | ParseError => {
   if (email.length === 0) {
     return {
       error: "Email is required.",
-      field: "ParseError",
+      field: "Email",
     };
   }
 
@@ -33,7 +33,7 @@ export const parseUsername = (input: String): Username | ParseError => {
   if (typeof input !== "string") {
     return {
       error: "Username is required.",
-      field: "ParseError",
+      field: "Username",
     };
   }
 
@@ -42,7 +42,7 @@ export const parseUsername = (input: String): Username | ParseError => {
   if (username.length < 3 || username.length > 30)
     return {
       error: "Username must be between 3 and 30 characters long.",
-      field: "ParseError",
+      field: "Username",
     };
   return username as Username;
 };
@@ -51,7 +51,7 @@ export const parsePassword = (input: String): Password | ParseError => {
   if (typeof input !== "string") {
     return {
       error: "Password is required.",
-      field: "ParseError",
+      field: "Password",
     };
   }
 
@@ -60,7 +60,7 @@ export const parsePassword = (input: String): Password | ParseError => {
   if (password.length < 8 || password.length > 100) {
     return {
       error: "Password must be between 8 and 100 characters long.",
-      field: "ParseError",
+      field: "Password",
     };
   }
   return password as Password;
@@ -69,8 +69,12 @@ export const parsePassword = (input: String): Password | ParseError => {
 export const createSession = async (userId: string) => {
   const sessionId = randomUUID();
   const row = await db.one(
-    "INSERT INTO sessions (session_id, user_id, expires_at) VALUES ($1, $2) RETURNING expires_at",
+    "INSERT INTO sessions (session_id, user_id) VALUES ($1, $2) RETURNING expires_at",
     [sessionId, userId],
   );
   return { sessionId, expiresAt: row.expires_at };
 };
+
+export function isParseError(value: unknown): value is ParseError {
+  return typeof value === "object" && value !== null;
+}

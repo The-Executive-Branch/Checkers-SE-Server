@@ -6,6 +6,7 @@ import {
   parsePassword,
   parseUsername,
   createSession,
+  isParseError,
 } from "./helper.ts";
 
 const app: Express = express();
@@ -29,8 +30,9 @@ app.post("/auth/register", async (req: Request, res: Response) => {
     const username = parseUsername(req.body?.username);
     const password = parsePassword(req.body?.password);
 
-    if ("error" in email || "error" in username || "error" in password)
-      return res.status(400).send({ error: "Invalid input" });
+    if (isParseError(username)) return res.status(400).send(username);
+    if (isParseError(email)) return res.status(400).send(email);
+    if (isParseError(password)) return res.status(400).send(password);
 
     // Hash the password and insert the new user into the database
     const passwordHash = bcrypt.hashSync(password, 10);
@@ -42,9 +44,12 @@ app.post("/auth/register", async (req: Request, res: Response) => {
     const sessionId = await createSession(row.id);
 
     // Return the session ID to the client
-    res
-      .status(201)
-      .send({ sessionId: sessionId.sessionId, expiresAt: sessionId.expiresAt });
+    res.status(201).send({
+      userId: row.userId,
+      username,
+      sessionId: sessionId.sessionId,
+      expiresAt: sessionId.expiresAt,
+    });
   } catch (error) {
     //error type return from PG promise
     console.error(error);
@@ -145,9 +150,12 @@ app.post("/auth/login", async (req: Request, res: Response) => {
 
     const sessionId = await createSession(row.id);
 
-    res
-      .status(201)
-      .send({ sessionId: sessionId.sessionId, expiresAt: sessionId.expiresAt });
+    res.status(201).send({
+      userId: row.userId,
+      username,
+      sessionId: sessionId.sessionId,
+      expiresAt: sessionId.expiresAt,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: ERRORS.SERVER }); // INTERNAL SERVER ERROR
