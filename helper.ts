@@ -4,38 +4,73 @@ import { randomUUID } from "node:crypto";
 type Email = string & { __brand: "Email" };
 type Username = string & { __brand: "Username" };
 type Password = string & { __brand: "Password" };
+type ParseError = {
+  error: string;
+  field: string;
+};
 
-export const parseEmail = (email: String): Email => {
-  if (typeof email !== "string") {
-    throw new Error("Invalid email format.");
+export const parseEmail = (input: string): Email | ParseError => {
+  if (typeof input !== "string") {
+    return {
+      error: "Email is required.",
+      field: "ParseError",
+    };
   }
+
+  const email = input.trim().toLowerCase();
+
+  if (email.length === 0) {
+    return {
+      error: "Email is required.",
+      field: "ParseError",
+    };
+  }
+
   return email as Email;
 };
 
-export const parseUsername = (username: String): Username => {
-  if (
-    typeof username !== "string" ||
-    username.length < 3 ||
-    username.length > 30
-  ) {
-    throw new Error("Username must be between 3 and 30 characters long.");
+export const parseUsername = (input: String): Username | ParseError => {
+  if (typeof input !== "string") {
+    return {
+      error: "Username is required.",
+      field: "ParseError",
+    };
   }
+
+  const username = input.trim().toLowerCase();
+
+  if (username.length < 3 || username.length > 30)
+    return {
+      error: "Username must be between 3 and 30 characters long.",
+      field: "ParseError",
+    };
   return username as Username;
 };
 
-export const parsePassword = (password: String): Password => {
-  if (typeof password !== "string" || password.length < 10) {
-    throw new Error("Password must be at least 10 characters long.");
+export const parsePassword = (input: String): Password | ParseError => {
+  if (typeof input !== "string") {
+    return {
+      error: "Password is required.",
+      field: "ParseError",
+    };
+  }
+
+  const password = input.trim().toLowerCase();
+
+  if (password.length < 8 || password.length > 100) {
+    return {
+      error: "Password must be between 8 and 100 characters long.",
+      field: "ParseError",
+    };
   }
   return password as Password;
 };
 
-export const CreateSession = async (userId: string) => {
+export const createSession = async (userId: string) => {
   const sessionId = randomUUID();
-  await db.none(
-    "INSERT INTO sessions (session_id, user_id, expires_at) VALUES ($1, $2, $3)",
+  const row = await db.one(
+    "INSERT INTO sessions (session_id, user_id, expires_at) VALUES ($1, $2) RETURNING expires_at",
     [sessionId, userId],
   );
-
-  return sessionId;
+  return { sessionId, expiresAt: row.expires_at };
 };
