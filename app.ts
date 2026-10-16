@@ -51,15 +51,16 @@ app.post("/auth/register", async (req: Request, res: Response) => {
       "INSERT INTO auth (email, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
       [email, username, passwordHash],
     );
+
     // Create a new session for the user and return the session ID
-    const sessionId = await createSession(row.id);
+    const sessionRow = await createSession(row.id);
 
     // Return the session ID to the client
-    res.status(201).send({
-      userId: row.userId,
+    res.send({
+      userId: row.id,
       username,
-      sessionId: sessionId.sessionId,
-      expiresAt: sessionId.expiresAt,
+      sessionId: sessionRow.sessionId,
+      expiresAt: sessionRow.expiresAt,
     });
   } catch (error) {
     //error type return from PG promise
@@ -150,8 +151,8 @@ app.post("/auth/login", async (req: Request, res: Response) => {
         .send({ error: "Incorrect username or password.", field: "username" }); // FORBIDDEN
     }
 
-    if ("error" in username || "error" in password)
-      return res.status(400).send({ error: "Invalid input" });
+    if (isParseError(username)) return res.status(400).send(username);
+    if (isParseError(password)) return res.status(400).send(password);
 
     const pwMatched = await bcrypt.compare(password, row.password_hash);
 
@@ -159,13 +160,13 @@ app.post("/auth/login", async (req: Request, res: Response) => {
       return res.status(403).send({ error: "Incorrect username or password." }); // FORBIDDEN
     }
 
-    const sessionId = await createSession(row.id);
+    const sessionRow = await createSession(row.id);
 
-    res.status(201).send({
-      userId: row.userId,
+    res.send({
+      userId: row.id,
       username,
-      sessionId: sessionId.sessionId,
-      expiresAt: sessionId.expiresAt,
+      sessionId: sessionRow.sessionId,
+      expiresAt: sessionRow.expiresAt,
     });
   } catch (error) {
     console.error(error);
