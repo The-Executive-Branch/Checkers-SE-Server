@@ -1,10 +1,21 @@
 import express, { type Express, type Request, type Response } from "express";
 import bcrypt from "bcrypt";
+import cors, { type CorsOptions } from "cors";
 import { db } from "./db.ts";
 
 const app: Express = express();
-
 app.use(express.json());
+
+const origins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:5173")
+  .split(",")
+  .map((origin) => origin.trim());
+
+const corsOptions: CorsOptions = {
+  origin: origins,
+  methods: "POST",
+  allowedHeaders: ["Authorization", "Content-Type"],
+};
+app.use(cors(corsOptions));
 
 const ERRORS = {
   UNAUTHORIZED: "You are not signed in. Please sign in and try again.",
