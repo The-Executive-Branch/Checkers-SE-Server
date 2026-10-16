@@ -6,7 +6,7 @@ import {
   parseEmail,
   parsePassword,
   parseUsername,
-  CreateSession,
+  createSession,
 } from "./helper.ts";
 
 const app: Express = express();
@@ -39,21 +39,23 @@ app.post("/auth/register", async (req: Request, res: Response) => {
     const email = parseEmail(req.body?.email);
     const username = parseUsername(req.body?.username);
     const password = parsePassword(req.body?.password);
+
+    if ("error" in email || "error" in username || "error" in password)
+      return res.status(400).send({ error: "Invalid input" });
+
     // Hash the password and insert the new user into the database
     const passwordHash = bcrypt.hashSync(password, 10);
-    const uid = await db.one(
+    const row = await db.one(
       "INSERT INTO auth (email, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
       [email, username, passwordHash],
     );
     // Create a new session for the user and return the session ID
-    const sessionId = await CreateSession(uid.id);
-    const expiresAt = await db.one(
-      "SELECT expires_at FROM sessions WHERE session_id = $1",
-      [sessionId],
-    );
+    const sessionId = await createSession(row.id);
 
     // Return the session ID to the client
-    res.status(201).send({ sessionId, expiresAt });
+    res
+      .status(201)
+      .send({ sessionId: sessionId.sessionId, expiresAt: sessionId.expiresAt });
   } catch (error) {
     //error type return from PG promise
     console.error(error);
@@ -132,31 +134,34 @@ app.post("/auth/login", async (req: Request, res: Response) => {
     const username = parseUsername(req.body?.username);
     const password = parsePassword(req.body?.password);
 
-    const uid = await db.one(
+    const row = await db.oneOrNone(
       "SELECT id, password_hash FROM auth WHERE username = $1",
       [username],
     );
 
-    const pwMatched = await bcrypt.compare(password, uid.password_hash);
-
-    if (!pwMatched) {
+    if (!row) {
       return res
         .status(403)
         .send({ error: "Incorrect username or password.", field: "username" }); // FORBIDDEN
     }
 
-    const sessionId = await CreateSession(uid.id);
-    const expiresAt = await db.one(
-      "SELECT expires_at FROM sessions WHERE session_id = $1",
-      [sessionId],
-    );
+    if ("error" in username || "error" in password)
+      return res.status(400).send({ error: "Invalid input" });
 
-    res.status(201).send({ sessionId, expiresAt });
+    const pwMatched = await bcrypt.compare(password, row.password_hash);
+
+    if (!pwMatched) {
+      return res.status(403).send({ error: "Incorrect username or password." }); // FORBIDDEN
+    }
+
+    const sessionId = await createSession(row.id);
+
+    res
+      .status(201)
+      .send({ sessionId: sessionId.sessionId, expiresAt: sessionId.expiresAt });
   } catch (error) {
     console.error(error);
-    return res
-      .status(400)
-      .send({ error: "Invalid input data.", field: "username" }); // BAD REQUEST
+    return res.status(500).send({ error: ERRORS.SERVER }); // INTERNAL SERVER ERROR
   }
 });
 
