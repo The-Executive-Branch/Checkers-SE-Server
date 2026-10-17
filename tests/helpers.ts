@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { randomUUID } from "node:crypto";
 import { db } from "../db.ts";
 
-export const TEST_PASSWORD = "test-password-123";
+export const TEST_PASSWORD = "Testpassword123!";
 export const AUTH_ROUTES = {
   UNREGISTER: "/auth/unregister",
   LOGOUT: "/auth/logout",

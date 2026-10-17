@@ -26,6 +26,17 @@ export const parseEmail = (input: string): Email | ParseError => {
     };
   }
 
+  const emailRegex =
+    /^(?!\.)(?!.*\.\.)(?!.*\.@)[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@(?!-)[a-zA-Z0-9-]+(?<!-)(?:\.[a-zA-Z0-9-]+(?<!-))*\.[a-zA-Z]{2,}$/;
+  const isValidEmail = (email: string) => emailRegex.test(email);
+
+  if (!isValidEmail(email)) {
+    return {
+      error: "Enter a valid email address, like name@example.com.",
+      field: "Email",
+    };
+  }
+
   return email as Email;
 };
 
@@ -55,11 +66,14 @@ export const parsePassword = (input: String): Password | ParseError => {
     };
   }
 
-  const password = input.trim().toLowerCase();
+  const password = input.trim();
+  const isValid =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/.test(password);
 
-  if (password.length < 8 || password.length > 100) {
+  if (!isValid) {
     return {
-      error: "Password must be between 8 and 100 characters long.",
+      error:
+        "Password must be between 8 and 24 characters long and contain at least one lowercase letter, one uppercase letter, one number, and one special character(!@#$%).",
       field: "Password",
     };
   }
