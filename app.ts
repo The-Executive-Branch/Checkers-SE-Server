@@ -57,7 +57,7 @@ app.post("/auth/register", async (req: Request, res: Response) => {
     const sessionRow = await createSession(row.id);
 
     // Return the session ID to the client
-    res.send({
+    res.status(201).send({
       userId: row.id,
       username,
       sessionId: sessionRow.sessionId,

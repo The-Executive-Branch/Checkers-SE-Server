@@ -29,7 +29,7 @@ it("creates an account and returns user + session info", async () => {
     .post(AUTH_ROUTES.REGISTER)
     .send(validBody());
 
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(201);
   expect(response.body).toMatchObject({ username: "newuser" });
   expect(response.body.userId).toBeDefined();
   expect(response.body.sessionId).toBeDefined();
