@@ -8,6 +8,7 @@ import {
   parseUsername,
   createSession,
   isParseError,
+  isUniqueViolation,
 } from "./helper.ts";
 
 const app: Express = express();
@@ -63,7 +64,14 @@ app.post("/auth/register", async (req: Request, res: Response) => {
       expiresAt: sessionRow.expiresAt,
     });
   } catch (error) {
-    //error type return from PG promise
+    if (isUniqueViolation(error)) {
+      const field =
+        error.constraint === "auth_email_key" ? "email" : "username";
+      return res
+        .status(409)
+        .send({ error: `That ${field} is already taken.`, field });
+    }
+
     console.error(error);
     return res.status(500).send({ error: ERRORS.SERVER });
   }
@@ -140,19 +148,17 @@ app.post("/auth/login", async (req: Request, res: Response) => {
     const username = parseUsername(req.body?.username);
     const password = parsePassword(req.body?.password);
 
+    if (isParseError(username)) return res.status(400).send(username);
+    if (isParseError(password)) return res.status(400).send(password);
+
     const row = await db.oneOrNone(
       "SELECT id, password_hash FROM auth WHERE username = $1",
       [username],
     );
 
     if (!row) {
-      return res
-        .status(403)
-        .send({ error: "Incorrect username or password.", field: "username" }); // FORBIDDEN
+      return res.status(403).send({ error: "Incorrect username or password." }); // FORBIDDEN
     }
-
-    if (isParseError(username)) return res.status(400).send(username);
-    if (isParseError(password)) return res.status(400).send(password);
 
     const pwMatched = await bcrypt.compare(password, row.password_hash);
 

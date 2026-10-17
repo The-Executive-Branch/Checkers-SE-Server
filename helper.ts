@@ -78,3 +78,14 @@ export const createSession = async (userId: string) => {
 export function isParseError(value: unknown): value is ParseError {
   return typeof value === "object" && value !== null;
 }
+
+export function isUniqueViolation(
+  error: unknown,
+): error is { code: string; constraint?: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505"
+  );
+}
