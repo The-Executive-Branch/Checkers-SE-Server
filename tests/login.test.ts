@@ -77,7 +77,7 @@ it("returns no password data on success", async () => {
   expect(response.text).not.toContain(TEST_PASSWORD);
 });
 
-it("adds a new session without removing the seeded one", async () => {
+it("adds a new session without removing the one already in the database", async () => {
   //Adds new seesion without removing any from the database
   const { userId, sessionId, username } = await seedUser();
 
