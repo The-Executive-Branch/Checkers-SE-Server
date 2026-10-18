@@ -71,6 +71,5 @@ it("works without an Authorization header", async () => {
     .post(AUTH_ROUTES.USERNAME_AVAILABLE)
     .send({ username });
 
-  expect(response.status).not.toBe(401);
   expect(response.status).toBe(200);
 });
