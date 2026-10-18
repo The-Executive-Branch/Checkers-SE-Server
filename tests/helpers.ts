@@ -8,6 +8,7 @@ export const AUTH_ROUTES = {
   LOGOUT: "/auth/logout",
   REGISTER: "/auth/register",
   LOGIN: "/auth/login",
+  USERNAME_AVAILABLE: "/auth/username-available",
 } as const;
 
 export const seedTestUser = async (options: { expired?: boolean } = {}) => {

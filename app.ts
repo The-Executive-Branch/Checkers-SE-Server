@@ -180,4 +180,25 @@ app.post("/auth/login", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/auth/username-available", async (req: Request, res: Response) => {
+  try {
+    const username = parseUsername(req.body?.username);
+
+    if (isParseError(username)) return res.status(400).send(username);
+
+    const row = await db.oneOrNone("SELECT id FROM auth WHERE username = $1", [
+      username,
+    ]);
+
+    if (row) {
+      return res.status(200).send({ available: false }); // CONFLICT
+    } else {
+      res.status(200).send({ available: true });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: ERRORS.SERVER }); // INTERNAL SERVER ERROR
+  }
+});
+
 export { app };
