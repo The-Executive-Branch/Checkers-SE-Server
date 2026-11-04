@@ -218,3 +218,13 @@ it.each([
     expect(checkerboard.getPiece({ row: 5, col: 0 })?.id).toBe("red-5-0");
   },
 );
+
+it("reports out of bounds when moving from off the board", () => {
+  const checkerboard = new CheckerBoard();
+  const move = () =>
+    checkerboard.moveCheckerPiece({ row: 8, col: 1 }, { row: 4, col: 1 });
+
+  expect(move).toThrow(
+    expect.objectContaining({ code: CheckerBoardErrorCode.OutOfBounds }),
+  );
+});
