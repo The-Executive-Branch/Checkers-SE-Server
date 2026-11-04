@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { randomUUID } from "node:crypto";
-import { db } from "../db.ts";
+import { db } from "../src/db.ts";
 
 export const TEST_PASSWORD = "Testpassword123!";
 export const AUTH_ROUTES = {

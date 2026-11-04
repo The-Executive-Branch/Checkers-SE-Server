@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, afterAll } from "vitest";
-import { db } from "../db.ts";
+import { db } from "../src/db.ts";
 
 beforeAll(async () => {
   // Get current database name and throw if it doesn't end in test

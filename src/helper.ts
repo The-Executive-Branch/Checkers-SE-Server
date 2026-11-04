@@ -1,6 +1,3 @@
-import { db } from "./db.ts";
-import { randomUUID } from "node:crypto";
-
 type Email = string & { __brand: "Email" };
 type Username = string & { __brand: "Username" };
 type Password = string & { __brand: "Password" };
@@ -78,15 +75,6 @@ export const parsePassword = (input: String): Password | ParseError => {
     };
   }
   return password as Password;
-};
-
-export const createSession = async (userId: string) => {
-  const sessionId = randomUUID();
-  const row = await db.one(
-    "INSERT INTO sessions (session_id, user_id) VALUES ($1, $2) RETURNING expires_at",
-    [sessionId, userId],
-  );
-  return { sessionId, expiresAt: row.expires_at };
 };
 
 export function isParseError(value: unknown): value is ParseError {

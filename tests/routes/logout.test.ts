@@ -1,8 +1,8 @@
-import { it, expect } from "vitest";
 import request from "supertest";
-import { app } from "../app.ts";
-import { seedTestUser, AUTH_ROUTES, addDeviceSession } from "./helpers.ts";
-import { db } from "../db.ts";
+import { it, expect } from "vitest";
+import { db } from "../../src/db.ts";
+import { app } from "../../src/app.ts";
+import { seedTestUser, AUTH_ROUTES, addDeviceSession } from "../helpers.ts";
 
 it("returns no content status code if header is invalid", async () => {
   const { sessionId } = await seedTestUser();

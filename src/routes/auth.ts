@@ -1,41 +1,19 @@
-import express, { type Express, type Request, type Response } from "express";
 import bcrypt from "bcrypt";
-import cors, { type CorsOptions } from "cors";
-import { db } from "./db.ts";
+import { Router, type Request, type Response } from "express";
+import { db } from "../db.ts";
+import { createSession } from "../sessions/index.ts";
 import {
+  isParseError,
+  isUniqueViolation,
   parseEmail,
   parsePassword,
   parseUsername,
-  createSession,
-  isParseError,
-  isUniqueViolation,
-} from "./helper.ts";
+} from "../helper.ts";
+import { ERRORS } from "../errors.ts";
 
-const app: Express = express();
-app.use(express.json());
+export const authRouter = Router();
 
-const origins = (process.env.CORS_ORIGINS ?? "http://127.0.0.1:5173")
-  .split(",")
-  .map((origin) => origin.trim());
-
-const corsOptions: CorsOptions = {
-  origin: origins,
-  methods: "POST",
-  allowedHeaders: ["Authorization", "Content-Type"],
-};
-app.use(cors(corsOptions));
-
-const ERRORS = {
-  UNAUTHORIZED: "You are not signed in. Please sign in and try again.",
-  SERVER: "Something went wrong. Please try again.",
-} as const;
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World!");
-});
-
-// AUTH ROUTES
-app.post("/auth/register", async (req: Request, res: Response) => {
+authRouter.post("/register", async (req: Request, res: Response) => {
   //Ensuring the data entered is valid and changing it to the correct types
   try {
     const email = parseEmail(req.body?.email);
@@ -77,7 +55,7 @@ app.post("/auth/register", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/auth/unregister", async (req: Request, res: Response) => {
+authRouter.post("/unregister", async (req: Request, res: Response) => {
   // Verify session ID exists inside request headers
   const [scheme, sessionId] = (req.headers.authorization ?? "").split(" ");
   if (scheme !== "Bearer" || !sessionId)
@@ -130,7 +108,7 @@ app.post("/auth/unregister", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/auth/logout", async (req: Request, res: Response) => {
+authRouter.post("/logout", async (req: Request, res: Response) => {
   const [scheme, sessionId] = (req.headers.authorization ?? "").split(" ");
   if (scheme !== "Bearer" || !sessionId) return res.sendStatus(204);
 
@@ -143,7 +121,7 @@ app.post("/auth/logout", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/auth/login", async (req: Request, res: Response) => {
+authRouter.post("/login", async (req: Request, res: Response) => {
   try {
     const username = parseUsername(req.body?.username);
     const password = parsePassword(req.body?.password);
@@ -180,7 +158,7 @@ app.post("/auth/login", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/auth/username-available", async (req: Request, res: Response) => {
+authRouter.post("/username-available", async (req: Request, res: Response) => {
   try {
     const username = parseUsername(req.body?.username);
 
@@ -200,5 +178,3 @@ app.post("/auth/username-available", async (req: Request, res: Response) => {
     return res.status(500).send({ error: ERRORS.SERVER }); // INTERNAL SERVER ERROR
   }
 });
-
-export { app };

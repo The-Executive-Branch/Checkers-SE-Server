@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import CheckerBoard, {
   CheckerBoardError,
   CheckerBoardErrorCode,
-} from "../models/checkerboard";
+} from "../../src/models/checkerboard";
 import type { CheckerPiece, Position } from "checkers-shared-types";
 
 const isDark = ({ row, col }: Position): boolean => (row + col) % 2 === 1;

@@ -1,6 +1,6 @@
-import { it, expect } from "vitest";
 import request from "supertest";
-import { app } from "../app.ts";
+import { it, expect } from "vitest";
+import { app } from "../src/app.ts";
 import { AUTH_ROUTES } from "./helpers.ts";
 
 const ALLOWED_ORIGIN = "http://localhost:5173";
