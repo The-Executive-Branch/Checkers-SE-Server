@@ -64,6 +64,15 @@ CREATE TABLE IF NOT EXISTS sessions(
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '7 days')
 );
+
+CREATE TABLE IF NOT EXISTS game_records (
+    game_id       UUID PRIMARY KEY,
+    red_user_id   UUID REFERENCES auth ON DELETE SET NULL,
+    black_user_id UUID REFERENCES auth ON DELETE SET NULL,
+    game_data     JSON NOT NULL,
+    ended_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 SQL
 
 
