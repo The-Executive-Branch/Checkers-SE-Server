@@ -14,14 +14,16 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "pg-promise": "^12.7.1"
+    "pg-promise": "^12.7.1",
+    "uuid": "^14.0.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
     "@types/supertest": "^7.2.1",
-    "checkers-shared-types": "github:The-Executive-Branch/Checkers-SE-Shared",
+    "checkers-shared-types": "github:The-Executive-Branch/Checkers-SE-Shared#v2.0.0",
     "supertest": "^7.3.1",
     "vitest": "^5.0.3"
   }
