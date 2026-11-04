@@ -80,6 +80,14 @@ export default class CheckerBoard {
       throw new CheckerBoardError(CheckerBoardErrorCode.SquareIsOccupied);
   }
 
+  private verifyCheckerPieceExists(position: Position): void {
+    if (!this.isPositionValid(position))
+      throw new CheckerBoardError(CheckerBoardErrorCode.OutOfBounds);
+
+    if (this.isSquareEmpty(position))
+      throw new CheckerBoardError(CheckerBoardErrorCode.EmptySquare);
+  }
+
   isPositionValid(position: Position): boolean {
     return (
       position.row >= 0 &&
@@ -96,21 +104,12 @@ export default class CheckerBoard {
   }
 
   removeCheckerPiece(position: Position): void {
-    if (!this.isPositionValid(position))
-      throw new CheckerBoardError(CheckerBoardErrorCode.OutOfBounds);
-
-    if (this.isSquareEmpty(position))
-      throw new CheckerBoardError(CheckerBoardErrorCode.EmptySquare);
-
+    this.verifyCheckerPieceExists(position);
     this.grid[position.row][position.col] = null;
   }
 
   crownCheckerPiece(position: Position): void {
-    if (!this.isPositionValid(position))
-      throw new CheckerBoardError(CheckerBoardErrorCode.OutOfBounds);
-    if (this.isSquareEmpty(position))
-      throw new CheckerBoardError(CheckerBoardErrorCode.EmptySquare);
-
+    this.verifyCheckerPieceExists(position);
     this.grid[position.row][position.col]!.isKing = true;
   }
 
@@ -133,15 +132,14 @@ export default class CheckerBoard {
 
   moveCheckerPiece(from: Position, to: Position): void {
     this.verifyCanOccupy(to);
+    this.verifyCheckerPieceExists(from);
 
     const pieceToMove = this.getPiece(from);
-    if (!pieceToMove)
-      throw new CheckerBoardError(CheckerBoardErrorCode.EmptySquare);
 
     this.grid[from.row][from.col] = null;
     this.grid[to.row][to.col] = pieceToMove;
 
-    pieceToMove.row = to.row;
-    pieceToMove.col = to.col;
+    pieceToMove!.row = to.row;
+    pieceToMove!.col = to.col;
   }
 }
