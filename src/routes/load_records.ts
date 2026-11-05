@@ -5,7 +5,7 @@ import { ERRORS } from "../errors.ts";
 
 export const gameRecordsRouter = Router();
 
-gameRecordsRouter.post("/list", async (req: Request, res: Response) => {
+gameRecordsRouter.get("/list", async (req: Request, res: Response) => {
   try {
     const [scheme, sessionId] = (req.headers.authorization ?? "").split(" ");
     if (scheme !== "Bearer" || !sessionId)
@@ -17,7 +17,7 @@ gameRecordsRouter.post("/list", async (req: Request, res: Response) => {
     );
     if (!session) return res.status(401).send({ error: ERRORS.UNAUTHORIZED });
 
-    const rows = await db.any(
+    const rows = await db.manyOrNone(
       `SELECT game_id, game_data, ended_at
        FROM game_records
        WHERE red_user_id = $1 OR black_user_id = $1
