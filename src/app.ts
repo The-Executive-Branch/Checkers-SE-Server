@@ -17,7 +17,7 @@ const corsOptions: CorsOptions = {
 };
 app.use(cors(corsOptions));
 app.use("/auth", authRouter);
-app.use("/gameRecords", gameRecordsRouter);
+app.use("/games", gameRecordsRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
