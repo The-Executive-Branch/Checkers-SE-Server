@@ -29,24 +29,19 @@ const seedPlayerWithGame = async (options: { expired?: boolean } = {}) => {
 
 it("returns every game the player played as red or black", async () => {
   const player = await seedPlayer();
-  const opponentA = await seedPlayer();
-  const opponentB = await seedPlayer();
+  const opponent = await seedPlayer();
 
   // player is red in one game, black in the other
   const asRedData = gameData(
     userPlayer(player.username),
-    userPlayer(opponentA.username),
+    userPlayer(opponent.username),
   );
   const asBlackData = gameData(
-    userPlayer(opponentB.username),
+    userPlayer(opponent.username),
     userPlayer(player.username),
   );
-  const asRedId = await seedGame(player.userId, opponentA.userId, asRedData);
-  const asBlackId = await seedGame(
-    opponentB.userId,
-    player.userId,
-    asBlackData,
-  );
+  const asRedId = await seedGame(player.userId, opponent.userId, asRedData);
+  const asBlackId = await seedGame(opponent.userId, player.userId, asBlackData);
 
   const response = await getGames(`Bearer ${player.sessionId}`);
 

@@ -3,9 +3,9 @@ import type { GetGameRecordsResponse } from "checkers-shared-types";
 import { db } from "../db.ts";
 import { ERRORS } from "../errors.ts";
 
-export const gameRecordsRouter = Router();
+export const gameRouter = Router();
 
-gameRecordsRouter.get("/list", async (req: Request, res: Response) => {
+gameRouter.get("/list", async (req: Request, res: Response) => {
   try {
     const [scheme, sessionId] = (req.headers.authorization ?? "").split(" ");
     if (scheme !== "Bearer" || !sessionId)
