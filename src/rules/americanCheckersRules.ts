@@ -4,11 +4,21 @@ import type CheckerBoard from "../models/checkerboard.ts";
 import type { CheckerColor, Position } from "checkers-shared-types";
 
 export class AmericanCheckersRules implements CheckerRules {
-  getLegalMoves(board: CheckerBoard, color: CheckerColor): LegalMove[] {
-    const legalMoves: LegalMove[] = [];
-    const checkers = board
+  getLegalMoves(
+    board: CheckerBoard,
+    color: CheckerColor,
+    mustJumpFrom?: Position,
+  ): LegalMove[] {
+    const simpleMoves: LegalMove[] = [];
+    const captures: LegalMove[] = [];
+    let checkers = board
       .getActiveCheckerPieces()
       .filter((p) => p.color === color);
+
+    if (mustJumpFrom)
+      checkers = checkers.filter(
+        (c) => c.row === mustJumpFrom.row && c.col === mustJumpFrom.col,
+      );
 
     checkers.forEach((checker) => {
       let neighbors: Position[] = [];
@@ -33,16 +43,35 @@ export class AmericanCheckersRules implements CheckerRules {
 
       // Is neighbor a valid position && neighbor space empty
       for (const n of neighbors) {
-        if (board.isPositionValid(n) && board.getPiece(n) === null)
-          legalMoves.push({
+        if (!board.isPositionValid(n)) continue;
+        const neighbor = board.getPiece(n);
+        if (neighbor === null)
+          simpleMoves.push({
             from: { row: checker.row, col: checker.col },
             to: n,
             captured: [],
           });
+        else if (neighbor.color !== color) {
+          const landing = {
+            row: n.row + (n.row - checker.row),
+            col: n.col + (n.col - checker.col),
+          };
+          if (
+            board.isPositionValid(landing) &&
+            board.getPiece(landing) === null
+          )
+            captures.push({
+              from: { row: checker.row, col: checker.col },
+              to: landing,
+              captured: [n],
+            });
+        }
       }
     });
 
-    return legalMoves;
+    if (captures.length > 0) return captures;
+    if (mustJumpFrom) return [];
+    return simpleMoves;
   }
 
   findLegalMove(
@@ -50,8 +79,9 @@ export class AmericanCheckersRules implements CheckerRules {
     color: CheckerColor,
     from: Position,
     to: Position,
+    mustJumpFrom?: Position,
   ): LegalMove | null {
-    const legalMoves = this.getLegalMoves(board, color);
+    const legalMoves = this.getLegalMoves(board, color, mustJumpFrom);
     const samePosition = (a: Position, b: Position) =>
       a.row === b.row && a.col === b.col;
 

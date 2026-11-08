@@ -85,6 +85,7 @@ it.each(["red", "black"] as const)(
     const board = boardWith(
       piece("red", { row: 4, col: 3 }),
       piece(blocker, { row: 3, col: 2 }),
+      piece("red", { row: 2, col: 1 }), // fills the landing square, so no capture
     );
     // Act
     const moves = rules
@@ -131,4 +132,132 @@ it("never changes the board", () => {
   rules.findLegalMove(board, "black", { row: 2, col: 1 }, { row: 3, col: 0 });
   // Assert
   expect(board.getActiveCheckerPieces()).toEqual(before);
+});
+
+it("lists a capture over an opponent onto the empty square beyond", () => {
+  // Arrange
+  const board = boardWith(
+    piece("red", { row: 5, col: 2 }),
+    piece("black", { row: 4, col: 3 }),
+  );
+  // Act
+  const moves = rules.getLegalMoves(board, "red");
+  // Assert
+  expect(moves).toEqual([
+    {
+      from: { row: 5, col: 2 },
+      to: { row: 3, col: 4 },
+      captured: [{ row: 4, col: 3 }],
+    },
+  ]);
+});
+
+it("only lists captures when one is available", () => {
+  // Arrange
+  const board = boardWith(
+    piece("red", { row: 5, col: 2 }),
+    piece("black", { row: 4, col: 3 }),
+    piece("red", { row: 5, col: 6 }), // can only step forward
+  );
+  // Act
+  const moves = rules.getLegalMoves(board, "red");
+  // Assert
+  expect(moves).toHaveLength(1);
+  expect(moves[0].captured).toHaveLength(1);
+});
+
+it.each([
+  {
+    name: "occupied",
+    blocker: piece("black", { row: 3, col: 4 }),
+    red: { row: 5, col: 2 },
+    black: { row: 4, col: 3 },
+  },
+  {
+    name: "off the board",
+    blocker: null,
+    red: { row: 2, col: 1 },
+    black: { row: 1, col: 0 },
+  },
+])(
+  "does not capture when the landing square is $name",
+  ({ blocker, red, black }) => {
+    // Arrange
+    const pieces = [piece("red", red), piece("black", black)];
+    if (blocker) pieces.push(blocker);
+    const board = boardWith(...pieces);
+    // Act
+    const moves = rules.getLegalMoves(board, "red");
+    // Assert
+    moves.forEach((m) => expect(m.captured).toEqual([]));
+  },
+);
+
+it("does not capture a piece of its own color", () => {
+  // Arrange
+  const board = boardWith(
+    piece("red", { row: 5, col: 2 }),
+    piece("red", { row: 4, col: 3 }),
+  );
+  // Act
+  const moves = rules.getLegalMoves(board, "red");
+  // Assert
+  moves.forEach((m) => expect(m.captured).toEqual([]));
+});
+
+it("only lets a king capture backward", () => {
+  // Arrange
+  const regular = boardWith(
+    piece("red", { row: 3, col: 2 }),
+    piece("black", { row: 4, col: 3 }),
+  );
+  const king = boardWith(
+    piece("red", { row: 3, col: 2 }, true),
+    piece("black", { row: 4, col: 3 }),
+  );
+  // Act
+  const regularMoves = rules.getLegalMoves(regular, "red");
+  const kingMoves = rules.getLegalMoves(king, "red");
+  // Assert
+  regularMoves.forEach((m) => expect(m.captured).toEqual([]));
+  expect(kingMoves).toEqual([
+    {
+      from: { row: 3, col: 2 },
+      to: { row: 5, col: 4 },
+      captured: [{ row: 4, col: 3 }],
+    },
+  ]);
+});
+
+it("only lists the must-jump piece's captures", () => {
+  // Arrange
+  const board = boardWith(
+    piece("red", { row: 5, col: 2 }),
+    piece("black", { row: 4, col: 3 }),
+    piece("red", { row: 5, col: 6 }),
+    piece("black", { row: 4, col: 5 }),
+  );
+  // Act
+  const moves = rules.getLegalMoves(board, "red", { row: 5, col: 6 });
+  // Assert
+  expect(moves).toHaveLength(1);
+  expect(moves[0].from).toEqual({ row: 5, col: 6 });
+});
+
+it("continues a jump from the landing square", () => {
+  // Arrange
+  const board = boardWith(
+    piece("red", { row: 3, col: 4 }),
+    piece("black", { row: 2, col: 5 }),
+  );
+  // Act
+  const moves = rules.getLegalMoves(board, "red", { row: 3, col: 4 });
+  // Assert
+  expect(moves).toEqual([
+    {
+      from: { row: 3, col: 4 },
+      to: { row: 1, col: 6 },
+      captured: [{ row: 2, col: 5 }],
+    },
+  ]);
 });

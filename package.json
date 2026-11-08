@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env src/index.ts",
-    "test": "npx vitest run"
+    "test": "npx vitest run",
+    "sync": "test \"$(git branch --show-current)\" != main || (echo 'Run this on a feature branch, not main.' && exit 1); git fetch origin && git rebase origin/main && git push --force-with-lease -u origin HEAD"
   },
   "author": "Donte Littlejohn <littlejr@email.uscupstate.edu>",
   "license": "ISC",
