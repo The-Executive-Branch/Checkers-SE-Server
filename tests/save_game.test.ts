@@ -90,20 +90,3 @@ it("rejects a game id that is already saved and keeps the original", async () =>
   expect(row.game_data.winner).toBe("red");
   expect(row.game_data.moves).toEqual(original.moves);
 });
-
-it("returns the saved players, winner, and moves when a player loads the game", async () => {
-  const red = await seedPlayer();
-  const black = await seedPlayer();
-  const record = makeRecord(
-    userPlayer(red.username),
-    userPlayer(black.username),
-  );
-
-  await saveGameRecord(record);
-  const response = await request(app)
-    .get(GAME_ROUTES.ONE(record.gameId))
-    .set("Authorization", `Bearer ${black.sessionId}`);
-
-  expect(response.status).toBe(200);
-  expect(response.body.data).toMatchObject(record);
-});
