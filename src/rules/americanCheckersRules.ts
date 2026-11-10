@@ -1,7 +1,12 @@
 import type { LegalMove } from "./legalMove.ts";
 import type { CheckerRules } from "./interface.ts";
 import type CheckerBoard from "../models/checkerboard.ts";
-import type { CheckerColor, CheckerPiece, Position } from "checkers-shared-types";
+import type {
+  CheckerColor,
+  CheckerPiece,
+  GameStatus,
+  Position,
+} from "checkers-shared-types";
 
 export class AmericanCheckersRules implements CheckerRules {
   getLegalMoves(
@@ -92,6 +97,14 @@ export class AmericanCheckersRules implements CheckerRules {
         (m) => samePosition(m.from, from) && samePosition(m.to, to),
       ) ?? null
     );
+  }
+
+  // The player whose turn it is loses when they have no legal moves,
+  // which includes having no pieces left.
+  getGameStatus(board: CheckerBoard, turn: CheckerColor): GameStatus {
+    if (this.getLegalMoves(board, turn).length > 0)
+      return { state: "inProgress" };
+    return { state: "finished", winner: turn === "red" ? "black" : "red" };
   }
 
   // A regular piece is crowned when it lands on its far row:

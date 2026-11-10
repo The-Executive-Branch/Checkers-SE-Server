@@ -122,6 +122,7 @@ it("never changes the board", () => {
   // Act
   rules.getLegalMoves(board, "red");
   rules.findLegalMove(board, "black", { row: 2, col: 1 }, { row: 3, col: 0 });
+  rules.getGameStatus(board, "red");
   // Assert
   expect(board.getActiveCheckerPieces()).toEqual(before);
 });
@@ -283,4 +284,37 @@ it("does not crown the piece on the board", () => {
   rules.getLegalMoves(board, "red");
   // Assert
   expect(board.getPiece({ row: 1, col: 2 })?.isKing).toBe(false);
+});
+
+// ── Game over ──────────────────────────────────────────────
+
+it("keeps the game in progress while the player to move has a move", () => {
+  // Arrange
+  const board = new CheckerBoard();
+  // Act
+  const status = rules.getGameStatus(board, "red");
+  // Assert
+  expect(status).toEqual({ state: "inProgress" });
+});
+
+it("ends the game when the player to move has no pieces left", () => {
+  // Arrange
+  const board = boardWith(piece("black", { row: 2, col: 1 }));
+  // Act
+  const status = rules.getGameStatus(board, "red");
+  // Assert
+  expect(status).toEqual({ state: "finished", winner: "black" });
+});
+
+it("ends the game when the player to move has pieces but no legal moves", () => {
+  // Arrange: red is pinned on its far edge with both forward squares filled,
+  // and neither black piece can be jumped because the squares beyond are off the board.
+  const board = boardWith(
+    piece("red", { row: 1, col: 0 }),
+    piece("black", { row: 0, col: 1 }),
+  );
+  // Act
+  const status = rules.getGameStatus(board, "red");
+  // Assert
+  expect(status).toEqual({ state: "finished", winner: "black" });
 });
