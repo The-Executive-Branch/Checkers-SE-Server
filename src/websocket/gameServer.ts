@@ -39,11 +39,16 @@ export default class GameServer {
   private accounts = new Map<Client, Account>();
   private online = new Map<string, Client>(); // username → latest connection
   private lobbies = new Map<GameId, Lobby>();
+  private readonly findAccount: FindAccount;
+  private readonly createGameId: () => GameId;
 
   constructor(
-    private readonly findAccount: FindAccount,
-    private readonly createGameId: () => GameId = () => randomUUID() as GameId,
-  ) {}
+    findAccount: FindAccount,
+    createGameId: () => GameId = () => randomUUID() as GameId,
+  ) {
+    this.findAccount = findAccount;
+    this.createGameId = createGameId;
+  }
 
   async handleMessage(client: Client, raw: string): Promise<void> {
     const message = parseClientMessage(raw);
