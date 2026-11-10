@@ -1,7 +1,9 @@
 import type {
   CheckerColor,
   GameId,
+  GameRecord,
   GameStatus,
+  Move,
   Player,
   Position,
   ServerMessage,
@@ -18,6 +20,10 @@ export type MoveRecord = {
   to: Position;
   capturedIds: string[];
   crownedId?: string;
+  // Who moves next, and which piece must keep jumping (if any). Saved with
+  // the move so a replay knows whose turn it is without re-running the rules.
+  nextPlayerTurn: CheckerColor;
+  jumpFrom?: Position;
   at: Date;
 };
 
@@ -151,6 +157,8 @@ export default class Game {
       to: move.to,
       capturedIds,
       crownedId: move.crowns ? moving.id : undefined,
+      nextPlayerTurn: this.turn,
+      jumpFrom: this.mustJumpFrom ?? undefined,
       at: new Date(),
     };
     this.history.push(record);
@@ -180,9 +188,32 @@ export default class Game {
       to: record.to,
       capturedIds: record.capturedIds,
       kingId: record.crownedId,
-      nextPlayerTurn: this.turn,
-      jumpFrom: this.mustJumpFrom ?? undefined,
+      nextPlayerTurn: record.nextPlayerTurn,
+      jumpFrom: record.jumpFrom,
       status: this.status,
     };
   }
+
+  // The finished game in the shape saved to game_records, or null if the
+  // game isn't over yet. Each move is stored the same way moveResult sends
+  // it, so the client can replay it without knowing the rules.
+  toGameRecord(): GameRecord | null {
+    if (this.status.state !== "finished" || !this.players.black) return null;
+    return {
+      gameId: this.id,
+      players: { red: this.players.red, black: this.players.black },
+      winner: this.status.winner,
+      moves: this.history.map(toSavedMove),
+    };
+  }
 }
+
+// Leaves out empty and missing fields, so saved moves stay small.
+const toSavedMove = (record: MoveRecord): Move => ({
+  from: record.from,
+  to: record.to,
+  ...(record.capturedIds.length > 0 && { capturedIds: record.capturedIds }),
+  ...(record.crownedId && { kingId: record.crownedId }),
+  ...(record.jumpFrom && { jumpFrom: record.jumpFrom }),
+  nextPlayerTurn: record.nextPlayerTurn,
+});

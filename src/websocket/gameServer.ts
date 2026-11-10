@@ -3,6 +3,7 @@ import type {
   CheckerColor,
   ClientMessage,
   GameId,
+  GameRecord,
   Player,
   ServerMessage,
 } from "checkers-shared-types";
@@ -21,6 +22,7 @@ export type Client = {
 
 export type Account = { userId: string; username: string };
 export type FindAccount = (sessionId: string) => Promise<Account | null>;
+export type SaveRecord = (record: GameRecord) => Promise<void>;
 
 export const CLOSE_CODES = {
   UNAUTHORIZED: 4401,
@@ -41,13 +43,19 @@ export default class GameServer {
   private lobbies = new Map<GameId, Lobby>();
   private readonly findAccount: FindAccount;
   private readonly createGameId: () => GameId;
+  private readonly saveRecord: SaveRecord;
 
+  // saveRecord stores finished games. It's passed in (index.ts gives it
+  // saveGameRecord) so this class never talks to the database itself,
+  // and tests can check what was saved without one.
   constructor(
     findAccount: FindAccount,
     createGameId: () => GameId = () => randomUUID() as GameId,
+    saveRecord: SaveRecord = async () => {},
   ) {
     this.findAccount = findAccount;
     this.createGameId = createGameId;
+    this.saveRecord = saveRecord;
   }
 
   async handleMessage(client: Client, raw: string): Promise<void> {
@@ -230,6 +238,20 @@ export default class GameServer {
 
     const result = game.toMoveResult(outcome.record);
     lobby.watchers.forEach((watcher) => watcher.send(result));
+
+    if (game.getStatus().state === "finished") this.finishGame(lobby);
+  }
+
+  // Saves the finished game and forgets it. Players keep the final board
+  // on screen; the server has nothing left to do with it. A failed save is
+  // logged, not sent to the players: the game itself still ended properly.
+  private finishGame({ game }: Lobby) {
+    this.lobbies.delete(game.id);
+    const record = game.toGameRecord();
+    if (!record) return;
+    this.saveRecord(record).catch((error) => {
+      console.error("Couldn't save finished game", game.id, error);
+    });
   }
 
   // ── Helpers ──────────────────────────────────────────────

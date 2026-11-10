@@ -2,6 +2,7 @@ import { it, expect } from "vitest";
 import type { CheckerColor, CheckerPiece, GameId, Player, Position } from "checkers-shared-types";
 import CheckerBoard from "../../src/models/checkerboard.ts";
 import Game, { GameError, GameErrorCode } from "../../src/models/game.ts";
+import { FINISHED_GAME_MOVES, FINISHED_GAME_WINNER } from "../fixtures/finishedGame.ts";
 
 const RAVAE: Player = { kind: "user", username: "ravae" };
 const BLAKE: Player = { kind: "user", username: "blake" };
@@ -218,4 +219,54 @@ it("builds a move result with the next turn and any must-jump square", () => {
     jumpFrom: undefined,
     status: { state: "inProgress" },
   });
+});
+
+// ── Saving finished games ──────────────────────────────────
+
+const playToTheEnd = (game: Game) => {
+  for (const { from, to } of FINISHED_GAME_MOVES) {
+    const outcome = game.applyMove(game.getTurn(), from, to);
+    if (!outcome.ok) throw new Error(outcome.reason);
+  }
+};
+
+it("has no record to save while the game is still going", () => {
+  // Arrange
+  const game = onlineGame();
+  // Act
+  game.applyMove("red", { row: 5, col: 0 }, { row: 4, col: 1 });
+  // Assert
+  expect(game.toGameRecord()).toBeNull();
+});
+
+it("builds a record of a finished game with every move", () => {
+  // Arrange
+  const game = onlineGame();
+  // Act
+  playToTheEnd(game);
+  const record = game.toGameRecord();
+  // Assert
+  expect(record).toMatchObject({
+    gameId: GAME_ID,
+    players: { red: RAVAE, black: BLAKE },
+    winner: FINISHED_GAME_WINNER,
+  });
+  expect(record!.moves).toHaveLength(FINISHED_GAME_MOVES.length);
+});
+
+it("saves each move the same way moveResult sends it, without empty fields", () => {
+  // Arrange
+  const game = onlineGame();
+  // Act
+  playToTheEnd(game);
+  const moves = game.toGameRecord()!.moves;
+  // Assert
+  expect(moves[0]).toEqual({
+    from: FINISHED_GAME_MOVES[0].from,
+    to: FINISHED_GAME_MOVES[0].to,
+    nextPlayerTurn: "black",
+  });
+  expect(moves.some((m) => m.capturedIds && m.capturedIds.length > 0)).toBe(true);
+  expect(moves.some((m) => m.kingId)).toBe(true);
+  expect(moves.some((m) => m.jumpFrom)).toBe(true);
 });

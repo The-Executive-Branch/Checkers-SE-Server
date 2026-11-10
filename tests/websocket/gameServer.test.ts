@@ -1,6 +1,7 @@
-import { it, expect, beforeEach } from "vitest";
-import type { GameId, ServerMessage } from "checkers-shared-types";
+import { it, expect, beforeEach, vi } from "vitest";
+import type { GameId, GameRecord, ServerMessage } from "checkers-shared-types";
 import GameServer, { CLOSE_CODES, type Account, type Client } from "../../src/websocket/gameServer.ts";
+import { FINISHED_GAME_MOVES, FINISHED_GAME_WINNER } from "../fixtures/finishedGame.ts";
 
 const ACCOUNTS: Record<string, Account> = {
   "session-ravae": { userId: "u1", username: "ravae" },
@@ -28,12 +29,17 @@ const ofType = <T extends ServerMessage["type"]>(client: FakeClient, type: T) =>
 
 let server: GameServer;
 let nextId: number;
+let saved: GameRecord[];
 
 beforeEach(() => {
   nextId = 0;
+  saved = [];
   server = new GameServer(
     async (sessionId) => ACCOUNTS[sessionId] ?? null,
     () => `game-${++nextId}` as GameId,
+    async (record) => {
+      saved.push(record);
+    },
   );
 });
 
@@ -258,4 +264,67 @@ it("stops sending game updates to a disconnected connection", async () => {
   await send(ravae, { type: "move", gameId: "game-1", from: { row: 5, col: 0 }, to: { row: 4, col: 1 } });
   // Assert
   expect(blake.received).toHaveLength(blakeCount);
+});
+
+// ── Finishing games ────────────────────────────────────────
+
+const playLocalGameToTheEnd = async () => {
+  const client = await signedIn("session-ravae");
+  await send(client, { type: "createGame", mode: { type: "local", guestName: "Sam" } });
+  for (const { from, to } of FINISHED_GAME_MOVES) {
+    await send(client, { type: "move", gameId: "game-1", from, to });
+  }
+  return client;
+};
+
+it("saves a game once when it finishes", async () => {
+  // Act
+  const client = await playLocalGameToTheEnd();
+  // Assert
+  expect(ofType(client, "moveRejected")).toEqual([]);
+  expect(saved).toHaveLength(1);
+  expect(saved[0]).toMatchObject({
+    gameId: "game-1",
+    players: { red: { kind: "user", username: "ravae" }, black: { kind: "guest", name: "Sam" } },
+    winner: FINISHED_GAME_WINNER,
+  });
+  expect(saved[0].moves).toHaveLength(FINISHED_GAME_MOVES.length);
+});
+
+it("tells the players the game is over before forgetting it", async () => {
+  // Act
+  const client = await playLocalGameToTheEnd();
+  // Assert
+  expect(ofType(client, "moveResult").at(-1)?.status).toEqual({
+    state: "finished",
+    winner: FINISHED_GAME_WINNER,
+  });
+});
+
+it("rejects moves in a game that has finished", async () => {
+  // Arrange
+  const client = await playLocalGameToTheEnd();
+  // Act
+  await send(client, { type: "move", gameId: "game-1", from: { row: 5, col: 0 }, to: { row: 4, col: 1 } });
+  // Assert
+  expect(last(client)).toMatchObject({ type: "moveRejected", reason: "You aren't playing in that game." });
+});
+
+it("logs a failed save without crashing the game server", async () => {
+  // Arrange
+  const error = new Error("database is down");
+  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  server = new GameServer(
+    async (sessionId) => ACCOUNTS[sessionId] ?? null,
+    () => `game-${++nextId}` as GameId,
+    async () => {
+      throw error;
+    },
+  );
+  // Act
+  await playLocalGameToTheEnd();
+  await Promise.resolve(); // let the failed save finish
+  // Assert
+  expect(logged).toHaveBeenCalledWith("Couldn't save finished game", "game-1", error);
+  logged.mockRestore();
 });
