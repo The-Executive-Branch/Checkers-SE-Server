@@ -97,6 +97,10 @@ export default class CheckerBoard {
     );
   }
 
+  getSize(): number {
+    return this.size;
+  }
+
   getPiece(position: Position): CheckerPiece | null {
     if (!this.isPositionValid(position)) return null;
     const { row, col } = position;

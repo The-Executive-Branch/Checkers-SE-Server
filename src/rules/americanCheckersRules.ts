@@ -1,7 +1,7 @@
 import type { LegalMove } from "./legalMove.ts";
 import type { CheckerRules } from "./interface.ts";
 import type CheckerBoard from "../models/checkerboard.ts";
-import type { CheckerColor, Position } from "checkers-shared-types";
+import type { CheckerColor, CheckerPiece, Position } from "checkers-shared-types";
 
 export class AmericanCheckersRules implements CheckerRules {
   getLegalMoves(
@@ -41,15 +41,16 @@ export class AmericanCheckersRules implements CheckerRules {
           { row: checker.row + 1, col: checker.col + 1 }, // down-right
         ];
 
-      // Is neighbor a valid position && neighbor space empty
       for (const n of neighbors) {
         if (!board.isPositionValid(n)) continue;
         const neighbor = board.getPiece(n);
+
         if (neighbor === null)
           simpleMoves.push({
             from: { row: checker.row, col: checker.col },
             to: n,
             captured: [],
+            crowns: this.wouldCrown(board, checker, n),
           });
         else if (neighbor.color !== color) {
           const landing = {
@@ -64,6 +65,7 @@ export class AmericanCheckersRules implements CheckerRules {
               from: { row: checker.row, col: checker.col },
               to: landing,
               captured: [n],
+              crowns: this.wouldCrown(board, checker, landing),
             });
         }
       }
@@ -90,5 +92,17 @@ export class AmericanCheckersRules implements CheckerRules {
         (m) => samePosition(m.from, from) && samePosition(m.to, to),
       ) ?? null
     );
+  }
+
+  // A regular piece is crowned when it lands on its far row:
+  // row 0 for red, the last row for black. Kings never crown again.
+  private wouldCrown(
+    board: CheckerBoard,
+    checker: CheckerPiece,
+    to: Position,
+  ): boolean {
+    if (checker.isKing) return false;
+    const farRow = checker.color === "red" ? 0 : board.getSize() - 1;
+    return to.row === farRow;
   }
 }
