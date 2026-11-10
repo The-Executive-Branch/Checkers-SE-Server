@@ -9,16 +9,22 @@ export type Move = {
   to: Position;
 };
 
-export enum CheckerBoardErrorCode {
-  EmptySquare = "Square is empty",
-  SquareIsOccupied = "Square is occupied",
-  SquareIsNotDark = "Square must be a dark square",
-  OutOfBounds = "Position coordinates must be within the checker board.",
-}
+export const CheckerBoardErrorCode = {
+  EmptySquare: "Square is empty",
+  SquareIsOccupied: "Square is occupied",
+  SquareIsNotDark: "Square must be a dark square",
+  OutOfBounds: "Position coordinates must be within the checker board.",
+} as const;
+
+export type CheckerBoardErrorCode =
+  (typeof CheckerBoardErrorCode)[keyof typeof CheckerBoardErrorCode];
 
 export class CheckerBoardError extends Error {
-  constructor(readonly code: CheckerBoardErrorCode) {
+  readonly code: CheckerBoardErrorCode;
+
+  constructor(code: CheckerBoardErrorCode) {
     super(code);
+    this.code = code;
     this.name = "CheckerBoardError";
   }
 }

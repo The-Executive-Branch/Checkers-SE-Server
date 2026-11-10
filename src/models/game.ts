@@ -25,13 +25,18 @@ export type MoveOutcome =
   | { ok: true; record: MoveRecord }
   | { ok: false; reason: string };
 
-export enum GameErrorCode {
-  SeatTaken = "That seat is already taken.",
-}
+export const GameErrorCode = {
+  SeatTaken: "That seat is already taken.",
+} as const;
+
+export type GameErrorCode = (typeof GameErrorCode)[keyof typeof GameErrorCode];
 
 export class GameError extends Error {
-  constructor(readonly code: GameErrorCode) {
+  readonly code: GameErrorCode;
+
+  constructor(code: GameErrorCode) {
     super(code);
+    this.code = code;
     this.name = "GameError";
   }
 }
